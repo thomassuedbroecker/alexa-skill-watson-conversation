@@ -1,6 +1,43 @@
 [![Build Status](https://travis-ci.org/IBM/alexa-skill-watson-conversation.svg?branch=master)](https://travis-ci.org/IBM/alexa-skill-watson-conversation)
 
-# Create an Alexa skill using Watson Assistant and OpenWhisk
+
+# De Pälzer ... additional configuration
+
+**YouTube** https://www.youtube.com/watch?v=mF4G3oLLges
+
+This is just a funny extensions to enable Alexa to speak Alexa "Pälzisch" a german dialect.
+You can just follow the given instructions original github.
+
+_Note:_ Related to the customization!
+**Here are my 4 changes:**
+
+1. I just changed code in the **main.js** file define the german settings for the weather service.
+
+```
+  const params = { language: 'de', // German
+                   units: 'm',     // European
+                   latitude: geocode[0].toString(),
+                   longitude: geocode[1].toString() };
+```
+
+2. Insert your own name of the Weather Service in the **main.js**.
+
+![](screenshots/weather-service-name.jpg)
+
+```
+// Insert your Service Name String here! "Bluemix_[YOUR SERVICENAME]"
+var verifier = check.includes("Bluemix_alexa-WeatherCompanyData");
+```
+3. Create inside Alexa the skill with german language, all the other steps will be remaining the same.
+
+4. Inside Watson Assistant just exchange the text to you native german dialect and have fun.
+
+![](screenshots/watson-conversation.png)
+
+_Have fun!_
+
+
+# Create an Alexa skill using Watson Assistant and Functions
 
 > Watson Conversation is now Watson Assistant. Although some images in this code pattern may show the service as Watson Conversation, the steps and processes will still work.
 
