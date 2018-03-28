@@ -23,6 +23,7 @@ const openwhisk = require('openwhisk');
 const request = require('request');
 
 function errorResponse(reason) {
+  console.log('errorResponse');
   return {
     version: '1.0',
     response: {
@@ -41,6 +42,7 @@ let redisClient;
 let context;
 
 function verifyFromAlexa(args, rawBody) {
+  console.log('verifyFromAlexa');
   return new Promise(function(resolve, reject) {
     const certUrl = args.__ow_headers.signaturecertchainurl;
     const signature = args.__ow_headers.signature;
@@ -55,6 +57,7 @@ function verifyFromAlexa(args, rawBody) {
 }
 
 function initClients(args) {
+  console.log('initClients');
   // Connect a client to Watson Assistant
   conversation = new ConversationV1({
     username: args.CONVERSATION_USERNAME,
@@ -75,6 +78,7 @@ function initClients(args) {
 }
 
 function getSessionContext(sessionId) {
+  console.log('Redis Session ID ');
   console.log('sessionId: ' + sessionId);
 
   return new Promise(function(resolve, reject) {
@@ -93,6 +97,7 @@ function getSessionContext(sessionId) {
 }
 
 function conversationMessage(request, workspaceId) {
+  console.log('Begin conversationMessage');
   return new Promise(function(resolve, reject) {
     const input = request.intent ? request.intent.slots.EveryThingSlot.value : 'start skill';
     console.log('WORKSPACE_ID: ' + workspaceId);
@@ -119,6 +124,7 @@ function conversationMessage(request, workspaceId) {
 }
 
 function lookupGeocode(args, location) {
+  console.log('Starting lookup GeoCode');
   if (args.WEATHER_URL) {
     return new Promise(function(resolve, reject) {
       const weatherPort = args.WEATHER_PORT || 443;
@@ -133,7 +139,8 @@ function lookupGeocode(args, location) {
           qs: {
             query: location,
             locationType: 'city',
-            language: 'en-US'
+            //language: 'en-US'
+            language: 'de'
           }
         },
         function(err, response, body) {
@@ -156,26 +163,35 @@ function lookupGeocode(args, location) {
 }
 
 function myOpenWhisk() {
+  console.log('Using OpenWhisk');
   return openwhisk();
 }
 
 function getWeatherCompanyForecast(geocode) {
   // console.log(geocode);
+  console.log('Begin getWeatherCompanyForecast-1');
   const ow = myOpenWhisk();
   const blocking = true;
-  const params = { units: 'e', latitude: geocode[0].toString(), longitude: geocode[1].toString() };
+  const params = { language: 'de',
+                   units: 'm',
+                   latitude: geocode[0].toString(),
+                   longitude: geocode[1].toString() };
 
   return ow.packages
     .list()
     .then(results => {
-      console.log('results: ', results);
+      console.log('getWeatherCompanyForecast-2-results: ', results);
       let name;
       // Find the Weather Company Data package and build the action name for forecast.
       for (let i = 0, size = results.length; i < size; i++) {
         const result = results[i];
-        console.log(result);
-        console.log(result.name);
-        if (result.name.startsWith('Bluemix_Weather Company Data')) {
+        console.log('getWeatherCompanyForecast-3-Package result:',result);
+        console.log('getWeatherCompanyForecast-4-Package result.name:',result.name);
+        var check = result.name;
+        console.log('getWeatherCompanyForecast-4-Package check:',check);
+        // Insert your Service Name String here! "Bluemix_[YOUR SERVICENAME]"
+        var verifier = check.includes("Bluemix_alexa-WeatherCompanyData");
+        if (verifier) {
           name = '/' + result.namespace + '/' + result.name + '/forecast';
           break;
         }
@@ -194,6 +210,7 @@ function actionHandler(args, watsonResponse) {
   console.log(watsonResponse);
 
   return new Promise((resolve, reject) => {
+    console.log('CheckWatson response');
     switch (watsonResponse.output.action) {
       case 'lookupWeather':
         console.log("Calling action 'lookupWeather'");
@@ -201,7 +218,9 @@ function actionHandler(args, watsonResponse) {
           .then(geocode => getWeatherCompanyForecast(geocode))
           .then(forecast => {
             // Use the first narrative.
+            console.log("Sending Weather as response");
             const narrative = forecast.response.result.forecasts[0].narrative;
+            console.log("Weather: ", narrative);
             watsonResponse.output.text.push(narrative);
             resolve(watsonResponse);
           });
